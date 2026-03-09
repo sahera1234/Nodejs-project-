@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Management - Add Flight</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .navbar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        .navbar a.active {
+            background: #667eea;
+            color: white;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        .card h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/" class="active">✈️ Add Flight</a>
+            <a href="/flights">📋 View Flights</a>
+        </nav>
+
+        <div class="card">
+            <h1>Add New Flight</h1>
+            
+            <form action="/add-flight" method="POST" onsubmit="return validateForm()">
+                <div class="form-group">
+                    <label>Flight Number:</label>
+                    <input type="text" name="flightNumber" placeholder="e.g., AA123" required>
+                </div>
+                <div class="form-group">
+                    <label>Aircraft Type:</label>
+                    <input type="text" name="aircraftType" placeholder="e.g., Boeing 737" required>
+                </div>
+                <div class="form-group">
+                    <label>Origin:</label>
+                    <input type="text" name="origin" placeholder="e.g., New York (JFK)" required>
+                </div>
+                <div class="form-group">
+                    <label>Destination:</label>
+                    <input type="text" name="destination" placeholder="e.g., Los Angeles (LAX)" required>
+                </div>
+                <div class="form-group">
+                    <label>Scheduled Departure:</label>
+                    <input type="datetime-local" name="scheduledDeparture" required>
+                </div>
+                <button type="submit" class="btn">✈️ Add Flight</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            const flightNumber = document.querySelector('input[name="flightNumber"]').value;
+            const flightNumberRegex = /^[A-Za-z]{2}\d{1,4}$/;
+            
+            if (!flightNumberRegex.test(flightNumber)) {
+                alert('❌ Flight number must be 2 letters followed by 1-4 digits');
+                return false;
+            }
+            
+            const departureDate = new Date(document.querySelector('input[name="scheduledDeparture"]').value);
+            const now = new Date();
+            
+            if (departureDate <= now) {
+                alert('❌ Departure must be in the future');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</body>
+</html>
