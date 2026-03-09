@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Management - View Flights</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .navbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .navbar a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        .navbar a.active {
+            background: #667eea;
+            color: white;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        .table-container h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-scheduled {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-departed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .btn-small {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/">✈️ Add Flight</a>
+            <a href="/flights" class="active">📋 View Flights</a>
+        </nav>
+
+        <div class="table-container">
+            <h1>All Flights</h1>
+            <div id="flightsTable">
+                <div class="loading">Loading flights...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadFlights);
+
+        async function loadFlights() {
+            try {
+                const response = await fetch('/api/flights');
+                const flights = await response.json();
+                
+                const container = document.getElementById('flightsTable');
+                
+                if (flights.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:2rem;">No flights found</div>';
+                    return;
+                }
+
+                let html = `<table>
+                    <thead>
+                        <tr>
+                            <th>Flight</th><th>Aircraft</th><th>Origin</th>
+                            <th>Destination</th><th>Status</th><th>Departure</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                flights.forEach(flight => {
+                    const date = new Date(flight.scheduledDeparture);
+                    const formattedDate = date.toLocaleString();
+                    const statusClass = flight.status === 'SCHEDULED' ? 'status-scheduled' : 'status-departed';
+
+                    html += `<tr>
+                        <td><strong>${flight.flightNumber}</strong></td>
+                        <td>${flight.aircraftType}</td>
+                        <td>${flight.origin}</td>
+                        <td>${flight.destination}</td>
+                        <td><span class="status ${statusClass}">${flight.status}</span></td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            ${flight.status === 'SCHEDULED' ? 
+                                `<form action="/update-status/${flight.id}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn-small">✈️ Depart</button>
+                                </form>` : 
+                                '✓ Departed'
+                            }
+                        </td>
+                    </tr>`;
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('flightsTable').innerHTML = 
+                    '<div style="text-align:center;padding:2rem;">Error loading flights</div>';
+            }
+        }
+
+        setInterval(loadFlights, 30000);
+    </script>
+</body>
+</html>
