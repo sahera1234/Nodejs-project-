@@ -1,0 +1,125 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+
+const app = express();
+const PORT = 3000;
+const DATA_FILE = path.join(__dirname, 'data', 'flights.json');
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
+// Ensure data directory exists
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+    fs.mkdirSync(path.join(__dirname, 'data'));
+}
+
+// Ensure flights.json exists
+if (!fs.existsSync(DATA_FILE)) {
+    const sampleFlights = [
+        {
+            id: uuidv4(),
+            flightNumber: 'AA123',
+            aircraftType: 'Boeing 737',
+            origin: 'New York (JFK)',
+            destination: 'Los Angeles (LAX)',
+            scheduledDeparture: '2024-01-25T10:30',
+            status: 'SCHEDULED',
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: uuidv4(),
+            flightNumber: 'UA456',
+            aircraftType: 'Airbus A320',
+            origin: 'Chicago (ORD)',
+            destination: 'Miami (MIA)',
+            scheduledDeparture: '2024-01-25T14:15',
+            status: 'SCHEDULED',
+            createdAt: new Date().toISOString()
+        }
+    ];
+    fs.writeFileSync(DATA_FILE, JSON.stringify(sampleFlights, null, 2));
+}
+
+// Helper functions
+function readFlights() {
+    const data = fs.readFileSync(DATA_FILE);
+    return JSON.parse(data);
+}
+
+function writeFlights(flights) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(flights, null, 2));
+}
+
+// Routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/flights', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'flights.html'));
+});
+
+// API Routes
+app.post('/add-flight', (req, res) => {
+    const { flightNumber, aircraftType, origin, destination, scheduledDeparture } = req.body;
+    
+    // Validation
+    if (!flightNumber || !aircraftType || !origin || !destination || !scheduledDeparture) {
+        return res.status(400).send('All fields are required');
+    }
+    
+    // Validate flight number format (2 letters + 1-4 digits)
+    const flightNumberRegex = /^[A-Za-z]{2}\d{1,4}$/;
+    if (!flightNumberRegex.test(flightNumber)) {
+        return res.status(400).send('Invalid flight number format');
+    }
+    
+    const flights = readFlights();
+    
+    const newFlight = {
+        id: uuidv4(),
+        flightNumber: flightNumber.toUpperCase(),
+        aircraftType,
+        origin,
+        destination,
+        scheduledDeparture,
+        status: 'SCHEDULED',
+        createdAt: new Date().toISOString()
+    };
+    
+    flights.push(newFlight);
+    writeFlights(flights);
+    
+    res.redirect('/flights');
+});
+
+app.get('/api/flights', (req, res) => {
+    const flights = readFlights();
+    res.json(flights);
+});
+
+app.post('/update-status/:id', (req, res) => {
+    const flightId = req.params.id;
+    const flights = readFlights();
+    
+    const flightIndex = flights.findIndex(f => f.id === flightId);
+    if (flightIndex === -1) {
+        return res.status(404).send('Flight not found');
+    }
+    
+    flights[flightIndex].status = 'DEPARTED';
+    writeFlights(flights);
+    
+    res.redirect('/flights');
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`📊 Add flights: http://localhost:${PORT}`);
+    console.log(`📋 View flights: http://localhost:${PORT}/flights`);
+});
